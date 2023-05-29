@@ -17,7 +17,7 @@ const router = new express.Router();
 // POST / {company} => {company}
 // Company should be: {handle, name, description, numEmployees, logoUrl}
 // Returns: {handle, name, description, numEmployees, logoUrl}
-// Authorization required: login
+// Authorization required: ADMIN
 router.post("/", isAdminAndLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, companyNewSchema);
@@ -69,7 +69,7 @@ router.get("/:handle", async function (req, res, next) {
 // Patches company data
 // Fields can be: { name, description, numEmployees, logo_url }
 // Returns: { handle, name, description, numEmployees, logo_url }
-// Authorization required: login
+// Authorization required: ADMIN
 router.patch("/:handle", isAdminAndLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, companyUpdateSchema);
@@ -87,7 +87,7 @@ router.patch("/:handle", isAdminAndLoggedIn, async function (req, res, next) {
 
 
 // DELETE /:handle => { deleted : handle }
-// Authorization required: login
+// Authorization required: ADMIN
 router.delete("/:handle", isAdminAndLoggedIn, async function (req, res, next) {
   try {
     await Company.remove(req.params.handle);

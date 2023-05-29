@@ -21,8 +21,8 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** POST /companies */
 
+// ************************************ POST /companies
 describe("POST /companies", function () {
   const newCompany = {
     handle: "new",
@@ -75,10 +75,10 @@ describe("POST /companies", function () {
   });
 });
 
-/************************************** GET /companies */
 
+// ************************************ GET /companies
 describe("GET /companies", function () {
-  test("ok for anon", async function () {
+  test("ok for ANON user", async function () {
     const response = await request(app).get("/companies");
 
     expect(response.statusCode).toBe(200);
@@ -247,10 +247,10 @@ describe("GET /companies", function () {
   });
 });
 
-/************************************** GET /companies/:handle */
 
+// ************************************** GET /companies/:handle
 describe("GET /companies/:handle", function () {
-  test("works for anon", async function () {
+  test("works for ANON user", async function () {
     const resp = await request(app).get(`/companies/c1`);
     expect(resp.body).toEqual({
       company: {
@@ -282,16 +282,16 @@ describe("GET /companies/:handle", function () {
   });
 });
 
-/************************************** PATCH /companies/:handle */
 
+// ************************************* PATCH /companies/:handle
 describe("PATCH /companies/:handle", function () {
-  test("works for users", async function () {
+  test("WORKS: for admins", async function () {
     const resp = await request(app)
         .patch(`/companies/c1`)
         .send({
           name: "C1-new",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.body).toEqual({
       company: {
         handle: "c1",
@@ -303,7 +303,7 @@ describe("PATCH /companies/:handle", function () {
     });
   });
 
-  test("unauth for anon", async function () {
+  test("FAILS: for Anon users", async function () {
     const resp = await request(app)
         .patch(`/companies/c1`)
         .send({
@@ -318,7 +318,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           name: "new nope",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(404);
   });
 
@@ -328,7 +328,7 @@ describe("PATCH /companies/:handle", function () {
         .send({
           handle: "c1-new",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(400);
   });
 
@@ -338,22 +338,22 @@ describe("PATCH /companies/:handle", function () {
         .send({
           logoUrl: "not-a-url",
         })
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(400);
   });
 });
 
-/************************************** DELETE /companies/:handle */
 
+// ************************************** DELETE /companies/:handle
 describe("DELETE /companies/:handle", function () {
-  test("works for users", async function () {
+  test("WORKS: for admins", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`)
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.body).toEqual({ deleted: "c1" });
   });
 
-  test("unauth for anon", async function () {
+  test("FAILS: for anon users", async function () {
     const resp = await request(app)
         .delete(`/companies/c1`);
     expect(resp.statusCode).toEqual(401);
@@ -362,7 +362,7 @@ describe("DELETE /companies/:handle", function () {
   test("not found for no such company", async function () {
     const resp = await request(app)
         .delete(`/companies/nope`)
-        .set("authorization", `Bearer ${u1Token}`);
+        .set("authorization", `Bearer ${adminToken}`);
     expect(resp.statusCode).toEqual(404);
   });
 });
