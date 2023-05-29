@@ -5,7 +5,8 @@ const { UnauthorizedError } = require("../expressError");
 const {
   authenticateJWT,
   ensureLoggedIn,
-  isAdminAndLoggedIn
+  isAdminAndLoggedIn,
+  isAdminOrCorrectUser
 } = require("./auth");
 
 
@@ -110,5 +111,51 @@ describe("isAdminAndLoggedIn", function () {
       expect(error).toBeTruthy();
     }
     isAdminAndLoggedIn(req, res, next);
+  })
+})
+
+describe("isAdminOrCorrectUser", function () {
+  test("Checks that user is admin and with incorrect username", function () {
+    expect.assertions(1);
+    const req = { params : { username : "testusername" } };
+    const res = { locals : { user : { username : "admin", isAdmin : true } } };
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+
+    isAdminOrCorrectUser(req, res, next);
+  })
+
+  test("Checks correct user is logged in and is not admin", function () {
+    expect.assertions(1);
+    const req = { params : { username : "sameusername" } };
+    const res = { locals : { user : { username : "sameusername", isAdmin : false } } };
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+
+    isAdminOrCorrectUser(req, res, next);
+  })
+
+  test("Throw error if username is incorrect and is not admin", function () {
+    expect.assertions(1);
+    const req = { params : { username : "testusername" } };
+    const res = { locals : { user : { username : "WRONGUSERNAME", isAdmin : false } } };
+    const next = function (err) {
+      expect(err).toBeTruthy();
+    };
+
+    isAdminOrCorrectUser(req, res, next);
+  })
+
+  test("Throw error is request from anon user", function () {
+    expect.assertions(1);
+    const req = { params : { username : "ANONUSER" } };
+    const res = { locals : { } };
+    const next = function (err) {
+      expect(err).toBeTruthy();
+    };
+
+    isAdminOrCorrectUser(req, res, next);
   })
 })

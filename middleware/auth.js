@@ -24,7 +24,7 @@ function authenticateJWT(req, res, next) {
 }
 
 
-// Middlewas to check if user is logged in
+// Middleware to check if user is logged in
 // If not logged in, raises Unauthorized Error
 function ensureLoggedIn(req, res, next) {
   try {
@@ -50,8 +50,20 @@ function isAdminAndLoggedIn (req, res, next) {
 }
 
 
+function isAdminOrCorrectUser (req, res, next) {
+  try {
+    const user = res.locals.user;
+    if (!user) throw new UnauthorizedError();
+    if (req.params.username !== user.username && !user.isAdmin) throw new UnauthorizedError();
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 module.exports = {
   authenticateJWT,
   ensureLoggedIn,
-  isAdminAndLoggedIn
+  isAdminAndLoggedIn,
+  isAdminOrCorrectUser
 };
