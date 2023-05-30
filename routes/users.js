@@ -1,11 +1,11 @@
 "use strict";
 
-/** Routes for users. */
 
+// Routes for USERS
 const jsonschema = require("jsonschema");
 
 const express = require("express");
-const { ensureLoggedIn, isAdminAndLoggedIn } = require("../middleware/auth");
+const { ensureLoggedIn, isAdminAndLoggedIn, isAdminOrCorrectUser } = require("../middleware/auth");
 const { BadRequestError } = require("../expressError");
 const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
@@ -15,19 +15,12 @@ const userUpdateSchema = require("../schemas/userUpdate.json");
 const router = express.Router();
 
 
-/** POST / { user }  => { user, token }
- *
- * Adds a new user. This is not the registration endpoint --- instead, this is
- * only for admin users to add new users. The new user being added can be an
- * admin.
- *
- * This returns the newly created user and an authentication token for them:
- *  {user: { username, firstName, lastName, email, isAdmin }, token }
- *
- * Authorization required: login
- **/
-
-router.post("/", ensureLoggedIn, async function (req, res, next) {
+// POST / { user } => { user, token }
+// Adds a new user. This is not the registration endpoint --- instead, this is only for admin users to add new users. The new user being added can be an admin.
+// This returns the newly created user and an authentication token for them:
+// {user: { username, firstName, lastName, email, isAdmin }, token }
+// Authorization required: ADMIN
+router.post("/", isAdminAndLoggedIn, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userNewSchema);
     if (!validator.valid) {
@@ -44,14 +37,10 @@ router.post("/", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** GET / => { users: [ {username, firstName, lastName, email }, ... ] }
- *
- * Returns list of all users.
- *
- * Authorization required: login
- **/
-
-router.get("/", ensureLoggedIn, async function (req, res, next) {
+// GET / => { users: [ {username, firstName, lastName, email }, ... ] }
+// Return list of ALL users
+// Authorization required: ADMIN
+router.get("/", isAdminAndLoggedIn, async function (req, res, next) {
   try {
     const users = await User.findAll();
     return res.json({ users });
@@ -61,14 +50,10 @@ router.get("/", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** GET /[username] => { user }
- *
- * Returns { username, firstName, lastName, isAdmin }
- *
- * Authorization required: login
- **/
-
-router.get("/:username", ensureLoggedIn, async function (req, res, next) {
+// GET /:username => { user }
+// Returns { username, firstName, lastName, isAdmind }
+// Authorization required: CORRECT USER OR ADMIN
+router.get("/:username", isAdminOrCorrectUser, async function (req, res, next) {
   try {
     const user = await User.get(req.params.username);
     return res.json({ user });
@@ -78,17 +63,11 @@ router.get("/:username", ensureLoggedIn, async function (req, res, next) {
 });
 
 
-/** PATCH /[username] { user } => { user }
- *
- * Data can include:
- *   { firstName, lastName, password, email }
- *
- * Returns { username, firstName, lastName, email, isAdmin }
- *
- * Authorization required: login
- **/
-
-router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
+// PATCH /:username { user } => { user }
+// Data can include: { firstName, lastName, password, email }
+// Returns { username, firstName, lastName, email, isAdmin }
+// Authorization required: CORRECT USER OR ADMIN
+router.patch("/:username", isAdminOrCorrectUser, async function (req, res, next) {
   try {
     const validator = jsonschema.validate(req.body, userUpdateSchema);
     if (!validator.valid) {
@@ -97,22 +76,19 @@ router.patch("/:username", ensureLoggedIn, async function (req, res, next) {
     }
 
     const user = await User.update(req.params.username, req.body);
-    return res.json({ user });
+    return res.status(200).json({ user });
   } catch (err) {
     return next(err);
   }
 });
 
 
-/** DELETE /[username]  =>  { deleted: username }
- *
- * Authorization required: login
- **/
-
-router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
+// DELETE /:username => { deleted : username }
+// Authorization required: CORRECT USER OR ADMIN
+router.delete("/:username", isAdminOrCorrectUser, async function (req, res, next){
   try {
     await User.remove(req.params.username);
-    return res.json({ deleted: req.params.username });
+    return res.status(202).json({ deleted: req.params.username });
   } catch (err) {
     return next(err);
   }
