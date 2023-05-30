@@ -19,8 +19,8 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** authenticate */
 
+//************************************** AUTHENTICATE
 describe("authenticate", function () {
   test("works", async function () {
     const user = await User.authenticate("u1", "password1");
@@ -52,8 +52,8 @@ describe("authenticate", function () {
   });
 });
 
-/************************************** register */
 
+// ************************************** REGISTER
 describe("register", function () {
   const newUser = {
     username: "new",
@@ -105,8 +105,8 @@ describe("register", function () {
   });
 });
 
-/************************************** findAll */
 
+// ************************************* findAll
 describe("findAll", function () {
   test("works", async function () {
     const users = await User.findAll();
@@ -129,8 +129,8 @@ describe("findAll", function () {
   });
 });
 
-/************************************** get */
 
+// ************************************* GET
 describe("get", function () {
   test("works", async function () {
     let user = await User.get("u1");
@@ -153,8 +153,8 @@ describe("get", function () {
   });
 });
 
-/************************************** update */
 
+// ************************************** UPDATE
 describe("update", function () {
   const updateData = {
     firstName: "NewF",
@@ -209,8 +209,8 @@ describe("update", function () {
   });
 });
 
-/************************************** remove */
 
+// ************************************** REMOVE
 describe("remove", function () {
   test("works", async function () {
     await User.remove("u1");

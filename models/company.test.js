@@ -7,7 +7,7 @@ const {
   commonBeforeAll,
   commonBeforeEach,
   commonAfterEach,
-  commonAfterAll,
+  commonAfterAll
 } = require("./_testCommon");
 
 beforeAll(commonBeforeAll);
@@ -15,8 +15,8 @@ beforeEach(commonBeforeEach);
 afterEach(commonAfterEach);
 afterAll(commonAfterAll);
 
-/************************************** create */
 
+// ************************************ CREATE
 describe("create new company", function () {
   const newCompany = {
     handle: "new",
@@ -56,8 +56,8 @@ describe("create new company", function () {
   });
 });
 
-/************************************** findAll */
 
+// ************************************ findAll
 describe("findAll Companies", function () {
   test("works: no filter", async function () {
     let companies = await Company.findAll();
@@ -190,9 +190,7 @@ describe("findAll Companies", function () {
 });
 
 
-
-/************************************** get */
-
+// ************************************ GET
 describe("get one company by handle", function () {
   test("works", async function () {
     let company = await Company.get("c1");
@@ -215,8 +213,8 @@ describe("get one company by handle", function () {
   });
 });
 
-/************************************** update */
 
+// ************************************ UPDATE
 describe("update one company by handle", function () {
   const updateData = {
     name: "New",
@@ -291,8 +289,8 @@ describe("update one company by handle", function () {
   });
 });
 
-/************************************** remove */
 
+// ************************************ REMOVE
 describe("remove company", function () {
   test("works", async function () {
     await Company.remove("c1");

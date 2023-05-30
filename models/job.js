@@ -1,14 +1,14 @@
 "use strict";
 
-const db = require("../db");
-const { BadRequestError, NotFoundError } = require("../expressError");
-const { sqlForPartialUpdate } = require("../helpers/sql");
+const db = require('../db');
+const { BadRequestError, NotFoundError } = require('../expressError');
+const { sqlForPartialUpdate } = require('../helpers/sql');
 
-
-// Company class methods
-class Company {
+// Job class methods
+class Job {
 
   // Builds a sql where clause from user data to query db in finaAll method
+  // ***UPDATE FOR TITLE, MINSALARY, HASEQUITY
   static createWhereClause (key, index) {
     if (key === "name") {
       return `${key} ILIKE $${index + 1}`;
@@ -21,36 +21,34 @@ class Company {
     }
   }
 
-  // Create company (from data), update DB, return new company data
+  // Create job (from data), update DB, return new job data
   // `data` should be { handle, name, description, numEmployees, logoUrl }
   // Returns { handle, name, description, numEmployees, logoUrl }
   // Throw BadRequestError if company is already in database
-  static async create({ handle, name, description, numEmployees, logoUrl }) {
-    const duplicateCheck = await db.query(
-          `SELECT handle
-           FROM companies
-           WHERE handle = $1`,
-        [handle]);
+  static async create({ title, salary, equity, companyHandle }) {
 
-    if (duplicateCheck.rows[0])
-      throw new BadRequestError(`Duplicate company: ${handle}`);
+    // *** Do not need to check for duplicates. OK for one company to have multiple of the same job
+    // const duplicateCheck = await db.query(
+    //       `SELECT title
+    //        FROM jobs
+    //        WHERE title = $1`,
+    //     [title]);
+
+    // if (duplicateCheck.rows[0])
+    //   throw new BadRequestError(`Duplicate job exists: ${title}`);
 
     const result = await db.query(
-          `INSERT INTO companies
-           (handle, name, description, num_employees, logo_url)
-           VALUES ($1, $2, $3, $4, $5)
-           RETURNING handle, name, description, num_employees AS "numEmployees", logo_url AS "logoUrl"`,
+          `INSERT INTO jobs
+           (title, salary, equity, company_handle)
+           VALUES ($1, $2, $3, $4)
+           RETURNING title, salary, equity, company_handle AS "companyHandle"`,
         [
-          handle,
-          name,
-          description,
-          numEmployees,
-          logoUrl,
+          title, salary, equity, companyHandle
         ]
     );
-    const company = result.rows[0];
+    const job = result.rows[0];
 
-    return company;
+    return job;
   }
 
 
@@ -171,7 +169,8 @@ class Company {
 
     if (!company) throw new NotFoundError(`No company: ${handle}`);
   }
+
 }
 
 
-module.exports = Company;
+module.exports = Job;

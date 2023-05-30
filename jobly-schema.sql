@@ -16,6 +16,7 @@ CREATE TABLE users (
   is_admin BOOLEAN NOT NULL DEFAULT FALSE
 );
 
+-- equity is NUMERIC type because it uses exact arithmetic, not floating point numbers
 CREATE TABLE jobs (
   id SERIAL PRIMARY KEY,
   title TEXT NOT NULL,
