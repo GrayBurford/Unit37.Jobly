@@ -7,20 +7,6 @@ const { sqlForPartialUpdate } = require('../helpers/sql');
 // Job class methods
 class Job {
 
-  // Builds a sql where clause from user data to query db in finaAll method
-  // ***UPDATE FOR TITLE, MINSALARY, HASEQUITY
-  static createWhereClause (key, index) {
-    if (key === "name") {
-      return `${key} ILIKE $${index + 1}`;
-    }
-    if (key === "minEmployees") {
-      return `num_employees >= $${index + 1}`;
-    }
-    if (key === "maxEmployees") {
-      return `num_employees <= $${index + 1}`;
-    }
-  }
-
   // Create job (from data), update DB, return new job data
   // `data` should be { handle, name, description, numEmployees, logoUrl }
   // Returns { handle, name, description, numEmployees, logoUrl }
@@ -58,116 +44,110 @@ class Job {
   // Integerizes incoming numbers (min/max employees)
   // Checks if min < max, or throws error
   // Filters incoming query string keys against valid keys, and throws error if invalid
+  // Find all jobs with/w/o querystring filters: title, minSalary, hasEquity
+  // Returns [{ title, salary, equity, companyHandle }, ...]
+  // Check for any query string filters, and if exists, push values and relevant sql where expressions to array variables
+  // Build db query from generic job query + whereExpressions, queryValues 
   static async findAll(queryString = {}) {
-    console.log('Query:', queryString);
-    let { minEmployees, maxEmployees } = queryString;
-    if (minEmployees) minEmployees = +minEmployees;
-    if (maxEmployees) maxEmployees = +maxEmployees;
+    let { title, minSalary, hasEquity } = queryString;
 
-    if (minEmployees && maxEmployees && minEmployees > maxEmployees) {
-      const msg = 'maxEmployees must be greater than minEmployees!'
-      throw new BadRequestError(msg)
+    let query = `SELECT jobs.id, 
+            jobs.title, 
+            jobs.salary, 
+            jobs.equity, 
+            jobs.company_handle AS "companyHandle", 
+            companies.name AS "companyName"
+        FROM jobs 
+        LEFT JOIN companies ON companies.handle = jobs.company_handle`
+    
+    let queryValues = [];
+    let whereExpressions = [];
+
+    if (title) {
+        queryValues.push(`%${title}%`);
+        whereExpressions.push(`title ILIKE $${queryValues.length}`);
+    }
+    if (minSalary) {
+        queryValues.push(minSalary);
+        whereExpressions.push(`salary >= $${queryValues.length}`);
+    }
+    if (hasEquity) {
+        whereExpressions.push(`equity > 0`);
     }
 
-    if (queryString.name) queryString.name = `%${queryString.name}%`;
-    let allKeys = Object.keys(queryString);
-    let allValues = Object.values(queryString);
-    console.log('allKeys:', allKeys);
-    console.log('allValues:', allValues);
-
-    const validKeys = ['name', 'minEmployees', 'maxEmployees'];
-    const invalidKeys = allKeys.filter(each => validKeys.indexOf(each) === -1);
-    if (invalidKeys.length) {
-      throw new BadRequestError(`You have (${invalidKeys.length}) invalid keys in your request: ${[...invalidKeys]}`);
+    if (whereExpressions.length) {
+        query += " WHERE " + whereExpressions.join(" AND ");
     }
 
-    let queryKeys = allKeys.map((key, index) => this.createWhereClause(key, index)).join(" AND ");
-    console.log('queryKeys:', queryKeys);
+    query += " ORDER BY title";
 
-    let WHERE = queryKeys.length ? `WHERE ${queryKeys}` : "";
-    console.log('WHERE:', WHERE);
+    const result = await db.query(query, queryValues);
+    
+    return result.rows;
+  }
 
-    const companiesRes = await db.query(
-          `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           ${WHERE}
-           ORDER BY name`, 
-           [...allValues]);
-    return companiesRes.rows;
+  
+  // Given a job title, return data about that job
+  // Returns { title, salary, equity, companyHandle }
+  // Throw NotFoundError if job title not found
+  static async get(title) {
+    const result = await db.query(
+          `SELECT title, 
+                    salary, 
+                    equity, 
+                    company_handle AS "companyHandle"
+            FROM jobs
+            WHERE title = $1`,
+        [title]);
+
+    const job = result.rows[0];
+
+    if (!job) throw new NotFoundError(`No job with title: ${title}`);
+
+    return job;
   }
 
 
-  // Given a company handle, return data about that company
-  // Returns { handle, name, description, numEmployees, logoUrl, jobs }
-  // jobs is [{ id, title, salary, equity, companyHandle }, ...]
-  // Throw NotFoundError if company handle is not found
-  static async get(handle) {
-    const companyRes = await db.query(
-          `SELECT handle,
-                  name,
-                  description,
-                  num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
-           WHERE handle = $1`,
-        [handle]);
-
-    const company = companyRes.rows[0];
-
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
-
-    return company;
-  }
-
-
-  // Update company data with `data`
+  // Update job data with `data`
   // This is a "partial update" -- fine if data doesn't contain all  fields; this only changes provided ones.
-  // Data can include: { name, description, numEmployees, logoUrl }
-  // Returns { handle, name, description, numEmployees, logoUrl }
-  // Throw NotFoundError if company handle is not found
-  static async update(handle, data) {
-    const { setCols, values } = sqlForPartialUpdate(
-        data,
-        {
-          numEmployees: "num_employees",
-          logoUrl: "logo_url",
-        });
-
+  // Data can include: { title, salary, equity }
+  // Returns { id, title, salary, equity, companyHandle }
+  // Throw NotFoundError if job title is not found
+  static async update(title, data) {
+    const { setCols, values } = sqlForPartialUpdate(data, {});
     const handleVarIdx = "$" + (values.length + 1);
 
-    const querySql = `UPDATE companies 
+    const querySql = `UPDATE jobs 
                       SET ${setCols} 
-                      WHERE handle = ${handleVarIdx} 
-                      RETURNING handle, 
-                                name, 
-                                description, 
-                                num_employees AS "numEmployees", 
-                                logo_url AS "logoUrl"`;
-    const result = await db.query(querySql, [...values, handle]);
-    const company = result.rows[0];
+                      WHERE title = ${handleVarIdx} 
+                      RETURNING id, 
+                                title, 
+                                salary, 
+                                equity, 
+                                company_handle AS "companyHandle"`;
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    const result = await db.query(querySql, [...values, title]);
+    const job = result.rows[0];
 
-    return company;
+    if (!job) throw new NotFoundError(`No job with this title: ${title}`);
+
+    return job;
   }
 
 
-  // Delete company from database: returns undefined
-  // Throw NotFoundError if company is not found
-  static async remove(handle) {
+  // Delete job from database: returns undefined
+  // Throw NotFoundError if title is not found
+  static async remove(title) {
     const result = await db.query(
           `DELETE
-           FROM companies
-           WHERE handle = $1
-           RETURNING handle`,
-        [handle]);
-    const company = result.rows[0];
+           FROM jobs
+           WHERE title = $1
+           RETURNING title`,
+        [title]);
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    const job = result.rows[0];
+
+    if (!job) throw new NotFoundError(`No job with title: ${title}`);
   }
 
 }
