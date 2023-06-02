@@ -47,6 +47,7 @@
             ]
         }
     },
+    "additionalProperties" : false,
     "examples": [{
         "id": 1,
         "title": "testTitle",

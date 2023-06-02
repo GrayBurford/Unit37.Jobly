@@ -11,7 +11,9 @@ const {
   commonAfterEach,
   commonAfterAll,
   u1Token,
+  testJobIds
 } = require("./_testCommon");
+
 const Company = require("../models/company");
 const { UnauthorizedError } = require("../expressError");
 const { adminToken } = require("../models/_testCommon");
@@ -259,6 +261,26 @@ describe("GET /companies/:handle", function () {
         description: "Desc1",
         numEmployees: 1,
         logoUrl: "http://c1.img",
+        jobs : [
+          {
+            id : testJobIds[0],
+            title : "testjob1",
+            salary : 111,
+            equity : "0.1"
+          },
+          {
+            id : testJobIds[1],
+            title : "testjob2",
+            salary : 222,
+            equity : "0.2"
+          },
+          {
+            id : testJobIds[2],
+            title : "testjob3",
+            salary : 333,
+            equity : "0.3"
+          }
+        ]
       },
     });
   });
@@ -272,6 +294,7 @@ describe("GET /companies/:handle", function () {
         description: "Desc2",
         numEmployees: 2,
         logoUrl: "http://c2.img",
+        jobs : []
       },
     });
   });

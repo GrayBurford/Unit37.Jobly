@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const db = require("../db.js");
 const { BCRYPT_WORK_FACTOR } = require("../config");
 const { createToken } = require("../helpers/tokens.js");
+
 const testJobIds = [];
 
 async function commonBeforeAll() {

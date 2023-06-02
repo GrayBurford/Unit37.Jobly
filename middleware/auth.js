@@ -44,8 +44,8 @@ function isAdminAndLoggedIn (req, res, next) {
       throw new UnauthorizedError();
     }
     return next();
-  } catch (error) {
-    return next(error);
+  } catch (err) {
+    return next(err);
   }
 }
 

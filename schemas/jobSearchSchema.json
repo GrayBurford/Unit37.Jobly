@@ -6,35 +6,35 @@
     "title": "Root Schema",
     "required": [],
     "properties": {
+        "minSalary": {
+            "type": "integer",
+            "default": 0,
+            "title": "The minSalary Schema",
+            "examples": [
+                100000
+            ]
+        },
         "title": {
             "type": "string",
             "default": "",
             "title": "The title Schema",
             "examples": [
-                "testTitle"
+                "Manager"
             ]
         },
-        "salary": {
-            "type": "integer",
-            "default": 0,
-            "title": "The salary Schema",
+        "hasEquity": {
+            "type": "boolean",
+            "default": false,
+            "title": "The hasEquity Schema",
             "examples": [
-                100000
-            ]
-        },
-        "equity": {
-            "type": "string",
-            "default": "",
-            "title": "The equity Schema",
-            "examples": [
-                "0.4"
+                true
             ]
         }
     },
     "additionalProperties" : false,
     "examples": [{
-        "title": "testTitle",
-        "salary": 100000,
-        "equity": "0.4"
+        "minSalary": 100000,
+        "title": "Manager",
+        "hasEquity": true
     }]
 }
