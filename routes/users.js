@@ -37,6 +37,22 @@ router.post("/", isAdminAndLoggedIn, async function (req, res, next) {
 });
 
 
+// POST /users/:username/jobs/:id
+// Returns => { applied : jobId }
+// Allows an admin or logged-in user to apply for a job
+// Authorization required: ADMIN or Logged in user
+router.post('/:username/jobs/:id', 
+  isAdminOrCorrectUser, 
+  async function (req, res, next) {
+    try {
+      const { username, id } = req.params;
+      await User.applyToJob(username, +id);
+      return res.status(201).json({ applied : +id });
+    } catch (err) {
+      return next(err);
+    }
+})
+
 // GET / => { users: [ {username, firstName, lastName, email }, ... ] }
 // Return list of ALL users
 // Authorization required: ADMIN
@@ -51,7 +67,7 @@ router.get("/", isAdminAndLoggedIn, async function (req, res, next) {
 
 
 // GET /:username => { user }
-// Returns { username, firstName, lastName, isAdmind }
+// Returns { username, firstName, lastName, isAdmin, jobsApplied }
 // Authorization required: CORRECT USER OR ADMIN
 router.get("/:username", isAdminOrCorrectUser, async function (req, res, next) {
   try {
